@@ -12,6 +12,8 @@ import { requireOrg } from "./middleware/require-org.js";
 import { authorize } from "./middleware/authorize.js";
 import type { Permission } from "./shared/permissions.js";
 import { clientsRouter } from "./modules/clients/client.routes.js";
+import { projectsRouter } from "./modules/projects/project.routes.js";
+import { tasksRouter } from "./modules/tasks/task.routes.js";
 
 export function createApp() {
     const app = express();
@@ -89,6 +91,8 @@ export function createApp() {
     );
 
     app.use("/api/clients", clientsRouter);
+    app.use("/api/projects", projectsRouter);
+    app.use("/api/tasks", tasksRouter);
 
     // ── 404 + error handlers (must be last) ────────────────
     app.use(notFoundHandler);
