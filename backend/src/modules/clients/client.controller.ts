@@ -42,14 +42,14 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function update(req: Request, res: Response) {
-    const { organizationId } = ctx(req);
+    const { organizationId, userId } = ctx(req);
     const input = UpdateClientSchema.parse(req.body);
-    const client = await service.updateClient(organizationId, req.params.id!, input);
+    const client = await service.updateClient(organizationId, userId, req.params.id!, input);
     res.json({ data: client });
 }
 
 export async function archive(req: Request, res: Response) {
-    const { organizationId } = ctx(req);
-    const client = await service.archiveClient(organizationId, req.params.id!);
+    const { organizationId, userId } = ctx(req);
+    const client = await service.archiveClient(organizationId, userId, req.params.id!);
     res.json({ data: client });
 }

@@ -34,14 +34,14 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function update(req: Request, res: Response) {
-    const { organizationId } = ctx(req);
+    const { organizationId, userId } = ctx(req);
     const input = UpdateProjectSchema.parse(req.body);
-    const project = await service.updateProject(organizationId, req.params.id!, input);
+    const project = await service.updateProject(organizationId, userId, req.params.id!, input);
     res.json({ data: project });
 }
 
 export async function archive(req: Request, res: Response) {
-    const { organizationId } = ctx(req);
-    const project = await service.archiveProject(organizationId, req.params.id!);
+    const { organizationId, userId } = ctx(req);
+    const project = await service.archiveProject(organizationId, userId, req.params.id!);
     res.json({ data: project });
 }

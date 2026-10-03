@@ -6,6 +6,7 @@ import type {
     ListClientsQuery,
     UpdateClientInput,
 } from "./client.schema.js";
+import { logActivity } from "../../shared/activity.js";
 
 function clean<T extends Record<string, unknown>>(obj: T): Partial<T> {
     const out: Record<string, unknown> = {};
@@ -72,17 +73,30 @@ export async function createClient(
         }
     }
 
-    return db.client.create({
+    const client = await db.client.create({
         data: {
-            ...data,
+            ...(data as any),
             organizationId,
             createdById: userId,
         },
     });
+
+    await logActivity({
+        organizationId,
+        actorId: userId,
+        action: "client.created",
+        entityType: "Client",
+        entityId: client.id,
+        clientId: client.id,
+        metadata: { name: client.name },
+    });
+
+    return client;
 }
 
 export async function updateClient(
     organizationId: string,
+    userId: string,
     id: string,
     input: UpdateClientInput,
 ) {
@@ -98,13 +112,39 @@ export async function updateClient(
         }
     }
 
-    return db.client.update({ where: { id }, data });
+    const updated = await db.client.update({ where: { id }, data });
+
+    await logActivity({
+        organizationId,
+        actorId: userId,
+        action: "client.updated",
+        entityType: "Client",
+        entityId: id,
+        clientId: id,
+    });
+
+    return updated;
 }
 
-export async function archiveClient(organizationId: string, id: string) {
+export async function archiveClient(
+    organizationId: string,
+    userId: string,
+    id: string,
+) {
     await getClient(organizationId, id);
-    return db.client.update({
+    const archived = await db.client.update({
         where: { id },
         data: { status: "ARCHIVED", archivedAt: new Date() },
     });
+
+    await logActivity({
+        organizationId,
+        actorId: userId,
+        action: "client.archived",
+        entityType: "Client",
+        entityId: id,
+        clientId: id,
+    });
+
+    return archived;
 }
