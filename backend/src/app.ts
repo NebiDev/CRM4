@@ -5,6 +5,8 @@ import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import { env } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./config/auth.js";
 
 export function createApp() {
     const app = express();
@@ -18,6 +20,8 @@ export function createApp() {
             credentials: true,
         }),
     );
+
+    app.use("/api/auth", toNodeHandler(auth));
 
     app.use(express.json({ limit: "1mb" }));
     app.use(express.urlencoded({ extended: true }));
