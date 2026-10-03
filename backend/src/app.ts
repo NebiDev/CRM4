@@ -7,6 +7,10 @@ import { env } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./config/auth.js";
+import { requireAuth } from "./middleware/require-auth.js";
+import { requireOrg } from "./middleware/require-org.js";
+import { authorize } from "./middleware/authorize.js";
+import type { Permission } from "./shared/permissions.js";
 
 export function createApp() {
     const app = express();
@@ -54,6 +58,32 @@ export function createApp() {
             timestamp: new Date().toISOString(),
         });
     });
+
+    app.get("/api/me", requireAuth, (req, res) => {
+        res.json({
+            user: req.user,
+            membership: req.membership ?? null,
+        });
+    });
+
+    app.get(
+        "/api/me/org",
+        requireAuth,
+        requireOrg,
+        (req, res) => {
+            res.json({ membership: req.membership });
+        },
+    );
+
+    // Tiny permission probe — proves the matrix fires.
+    const probe: Permission = "clients.create";
+    app.get(
+        "/api/me/can-create-clients",
+        requireAuth,
+        requireOrg,
+        authorize(probe),
+        (_req, res) => res.json({ allowed: true, permission: probe }),
+    );
 
     // ── 404 + error handlers (must be last) ────────────────
     app.use(notFoundHandler);
