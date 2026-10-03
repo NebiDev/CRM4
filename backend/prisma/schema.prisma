@@ -15,7 +15,7 @@ datasource db {
 }
 
 model User {
-  id            String       @id
+  id            String       @id @default(cuid())
   name          String
   email         String
   emailVerified Boolean
@@ -27,12 +27,21 @@ model User {
   members       Member[]
   invitations   Invitation[]
 
+  // NEXA domain relations
+  clientsCreated  Client[]      @relation("ClientCreatedBy")
+  projectsCreated Project[]     @relation("ProjectCreatedBy")
+  tasksCreated    Task[]        @relation("TaskCreatedBy")
+  tasksAssigned   Task[]        @relation("TaskAssignedTo")
+  invoicesCreated Invoice[]     @relation("InvoiceCreatedBy")
+  filesUploaded   FileAsset[]   @relation("FileUploadedBy")
+  activities      ActivityLog[] @relation("ActivityActor")
+
   @@unique([email])
   @@map("user")
 }
 
 model Session {
-  id                   String   @id
+  id                   String   @id @default(cuid())
   expiresAt            DateTime
   token                String
   createdAt            DateTime
@@ -48,7 +57,7 @@ model Session {
 }
 
 model Account {
-  id                    String    @id
+  id                    String    @id @default(cuid())
   accountId             String
   providerId            String
   userId                String
@@ -67,7 +76,7 @@ model Account {
 }
 
 model Verification {
-  id         String    @id
+  id         String    @id @default(cuid())
   identifier String
   value      String
   expiresAt  DateTime
@@ -78,7 +87,7 @@ model Verification {
 }
 
 model Organization {
-  id          String       @id
+  id          String       @id @default(cuid())
   name        String
   slug        String?
   logo        String?
@@ -87,12 +96,20 @@ model Organization {
   members     Member[]
   invitations Invitation[]
 
+  // NEXA domain relations
+  clients    Client[]
+  projects   Project[]
+  tasks      Task[]
+  invoices   Invoice[]
+  fileAssets FileAsset[]
+  activities ActivityLog[]
+
   @@unique([slug])
   @@map("organization")
 }
 
 model Member {
-  id             String       @id
+  id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   userId         String
@@ -104,7 +121,7 @@ model Member {
 }
 
 model Invitation {
-  id             String       @id
+  id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   email          String
@@ -115,4 +132,248 @@ model Invitation {
   user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@map("invitation")
+}
+
+// ─────────────────────────────────────────────────────────
+// NEXA domain models
+// All tenant-owned tables carry organizationId + index.
+// Money uses Decimal, never Float.
+// Business records soft-delete via archivedAt.
+// ─────────────────────────────────────────────────────────
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  ARCHIVED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum FileVisibility {
+  ORG // visible to owner/admin/staff per permission
+  CLIENT // additionally visible to the linked client
+}
+
+model Client {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  email          String?
+  phone          String?
+  company        String?
+  status         ClientStatus @default(ACTIVE)
+  notes          String?
+  createdById    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  archivedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User?        @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  projects   Project[]
+  invoices   Invoice[]
+  files      FileAsset[]
+  activities ActivityLog[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId, status])
+  @@index([organizationId, name])
+}
+
+model Project {
+  id             String          @id @default(cuid())
+  organizationId String
+  clientId       String
+  name           String
+  description    String?
+  status         ProjectStatus   @default(PLANNING)
+  priority       ProjectPriority @default(MEDIUM)
+  startDate      DateTime?
+  dueDate        DateTime?
+  budget         Decimal?        @db.Decimal(12, 2)
+  createdById    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  archivedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  createdBy    User?        @relation("ProjectCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  tasks      Task[]
+  invoices   Invoice[]
+  files      FileAsset[]
+  activities ActivityLog[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, clientId])
+  @@index([organizationId, dueDate])
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  organizationId String
+  projectId      String
+  title          String
+  description    String?
+  status         TaskStatus   @default(TODO)
+  priority       TaskPriority @default(MEDIUM)
+  dueDate        DateTime?
+  assignedToId   String?
+  createdById    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  archivedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedTo   User?        @relation("TaskAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy    User?        @relation("TaskCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  activities ActivityLog[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, projectId])
+  @@index([organizationId, assignedToId])
+  @@index([organizationId, dueDate])
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  organizationId String
+  clientId       String
+  projectId      String?
+  number         String // immutable per org
+  status         InvoiceStatus @default(DRAFT)
+  currency       String        @default("USD")
+  subtotal       Decimal       @db.Decimal(12, 2)
+  taxAmount      Decimal       @default(0) @db.Decimal(12, 2)
+  total          Decimal       @db.Decimal(12, 2)
+  issuedAt       DateTime?
+  dueDate        DateTime?
+  paidAt         DateTime?
+  notes          String?
+  createdById    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  archivedAt     DateTime?
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client            @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  project      Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy    User?             @relation("InvoiceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  lineItems    InvoiceLineItem[]
+  files        FileAsset[]
+  activities   ActivityLog[]
+
+  @@unique([organizationId, number])
+  @@index([organizationId, status])
+  @@index([organizationId, clientId])
+  @@index([organizationId, dueDate])
+}
+
+model InvoiceLineItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Decimal @db.Decimal(10, 2)
+  unitPrice   Decimal @db.Decimal(12, 2)
+  amount      Decimal @db.Decimal(12, 2) // quantity * unitPrice
+  position    Int     @default(0)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+model FileAsset {
+  id             String         @id @default(cuid())
+  organizationId String
+  clientId       String?
+  projectId      String?
+  invoiceId      String?
+  uploadedById   String?
+  bucketKey      String // S3 object key, never a public URL
+  originalName   String
+  contentType    String
+  sizeBytes      Int
+  checksum       String?
+  visibility     FileVisibility @default(ORG)
+  createdAt      DateTime       @default(now())
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  invoice      Invoice?     @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  uploadedBy   User?        @relation("FileUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, bucketKey])
+  @@index([organizationId, clientId])
+  @@index([organizationId, projectId])
+  @@index([organizationId, invoiceId])
+}
+
+model ActivityLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  actorId        String?
+  action         String // e.g. "client.created", "invoice.issued"
+  entityType     String // e.g. "Client", "Invoice"
+  entityId       String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor        User?        @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  clientId  String?
+  projectId String?
+  taskId    String?
+  invoiceId String?
+
+  client  Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  task    Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  invoice Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, entityType, entityId])
 }
