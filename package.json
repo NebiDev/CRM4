@@ -1,0 +1,27 @@
+{
+  "name": "nexa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NEXA — multi-tenant CRM and marketing platform",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "engines": {
+    "node": ">=20.11.1 <23"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm --workspace backend run dev",
+    "dev:web": "npm --workspace frontend run dev",
+    "build": "npm --workspace backend run build && npm --workspace frontend run build",
+    "typecheck": "npm --workspace backend run typecheck && npm --workspace frontend run typecheck",
+    "db:migrate": "npm --workspace backend run db:migrate",
+    "db:generate": "npm --workspace backend run db:generate",
+    "db:studio": "npm --workspace backend run db:studio",
+    "db:ping": "npm --workspace backend run db:ping"
+  },
+  "devDependencies": {
+    "concurrently": "9.0.1"
+  }
+}
