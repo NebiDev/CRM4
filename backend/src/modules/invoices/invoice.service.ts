@@ -281,5 +281,41 @@ export async function transitionInvoice(
         metadata: { number: invoice.number, total: invoice.total.toString() },
     });
 
+    // Notify the client about the status change (non-blocking).
+
+    if (next === "SENT" && invoice.status === "SENT") {
+        // Load client + org to build the email.
+        const client = await db.client.findUnique({
+            where: { id: invoice.clientId },
+            select: { name: true, email: true },
+        });
+        const org = await db.organization.findUnique({
+            where: { id: organizationId },
+            select: { name: true },
+        });
+
+        if (client?.email) {
+            const { invoiceSentEmail } = await import("../../shared/email-templates.js");
+            const { sendEmail } = await import("../../shared/email.js");
+            const { env } = await import("../../config/env.js");
+
+            const base = env.FRONTEND_URL.replace(/\/$/, "");
+            const viewUrl = `${base}/app/invoices/${invoice.id}`;
+
+            const payload = invoiceSentEmail({
+                to: client.email,
+                clientName: client.name,
+                organizationName: org?.name ?? "Your provider",
+                invoiceNumber: invoice.number,
+                total: invoice.total.toString(),
+                currency: invoice.currency,
+                dueDate: invoice.dueDate ? new Date(invoice.dueDate).toDateString() : null,
+                viewUrl,
+            });
+
+            void sendEmail(payload);
+        }
+    }
+
     return invoice;
 }

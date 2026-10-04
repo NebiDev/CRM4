@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { apiPost } from "@/lib/api";
 
 export function useOrganization() {
     return useQuery({
@@ -17,11 +18,16 @@ export function useInviteMember() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: async ({ email, role }: { email: string; role: string }) => {
-            const result = await authClient.organization.inviteMember({
-                email,
-                role,
-            });
+            const result = await authClient.organization.inviteMember({ email, role });
             if ((result as any).error) throw new Error((result as any).error.message);
+
+            // Non-blocking email notification.
+            try {
+                await apiPost("/api/organizations/notify-invitation", { email, role });
+            } catch (err) {
+                console.warn("[invite] notification failed", err);
+            }
+
             return result.data;
         },
         onSuccess: () => {

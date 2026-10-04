@@ -20,6 +20,7 @@ import { TasksPage } from "@/pages/app/TasksPage";
 import { InvoicesPage } from "@/pages/app/InvoicesPage";
 import { FilesPage } from "@/pages/app/FilesPage";
 import { TeamPage } from "@/pages/app/TeamPage";
+import { AcceptInvitationPage } from "@/pages/auth/AcceptInvitationPage";
 import { SettingsPage } from "@/pages/app/SettingsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { TaskDetailPage } from "@/pages/app/TaskDetailPage";
@@ -51,6 +52,12 @@ export function AppRouter() {
                     <RedirectIfAuth>
                         <RegisterPage />
                     </RedirectIfAuth>
+                }
+            />
+            <Route
+                path="/accept-invitation"
+                element={
+                    <AcceptInvitationPage />
                 }
             />
 

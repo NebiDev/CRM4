@@ -19,6 +19,7 @@ import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
 import { filesRouter } from "./modules/files/file.routes.js";
 import { invoicesRouter } from "./modules/invoices/invoice.routes.js";
 import { agreementsRouter } from "./modules/agreements/agreement.routes.js";
+import { organizationsRouter } from "./modules/organizations/organization.routes.js";
 
 export function createApp() {
     const app = express();
@@ -102,6 +103,7 @@ export function createApp() {
     app.use("/api/files", filesRouter);
     app.use("/api/invoices", invoicesRouter);
     app.use("/api/agreements", agreementsRouter);
+    app.use("/api/organizations", organizationsRouter);
 
     // ── 404 + error handlers (must be last) ────────────────
     app.use(notFoundHandler);
