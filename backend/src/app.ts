@@ -11,10 +11,12 @@ import { requireAuth } from "./middleware/require-auth.js";
 import { requireOrg } from "./middleware/require-org.js";
 import { authorize } from "./middleware/authorize.js";
 import type { Permission } from "./shared/permissions.js";
+import "./config/s3.js"
 import { clientsRouter } from "./modules/clients/client.routes.js";
 import { projectsRouter } from "./modules/projects/project.routes.js";
 import { tasksRouter } from "./modules/tasks/task.routes.js";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
+import { filesRouter } from "./modules/files/file.routes.js";
 
 export function createApp() {
     const app = express();
@@ -95,6 +97,7 @@ export function createApp() {
     app.use("/api/projects", projectsRouter);
     app.use("/api/tasks", tasksRouter);
     app.use("/api/dashboard", dashboardRouter);
+    app.use("/api/files", filesRouter);
 
     // ── 404 + error handlers (must be last) ────────────────
     app.use(notFoundHandler);

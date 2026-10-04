@@ -1,4 +1,5 @@
 import { db } from "../config/db.js";
+import { Prisma } from "@prisma/client";
 
 export type ActivityEntity = "Client" | "Project" | "Task" | "Invoice" | "File" | "Organization";
 
@@ -8,7 +9,8 @@ export interface LogActivityInput {
     action: string;         // "client.created", "invoice.issued", ...
     entityType: ActivityEntity;
     entityId: string;
-    metadata?: Record<string, unknown>;
+    // metadata?: Record<string, unknown>;
+    metadata?: Prisma.InputJsonValue;
     clientId?: string;
     projectId?: string;
     taskId?: string;
@@ -28,7 +30,8 @@ export async function logActivity(input: LogActivityInput): Promise<void> {
                 action: input.action,
                 entityType: input.entityType,
                 entityId: input.entityId,
-                metadata: input.metadata ?? undefined,
+                // metadata: input.metadata ?? undefined,
+                metadata: input.metadata ?? Prisma.JsonNull,
                 clientId: input.clientId,
                 projectId: input.projectId,
                 taskId: input.taskId,
