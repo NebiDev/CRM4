@@ -23,6 +23,7 @@ import { TeamPage } from "@/pages/app/TeamPage";
 import { SettingsPage } from "@/pages/app/SettingsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { TaskDetailPage } from "@/pages/app/TaskDetailPage";
+import { InvoiceDetailPage } from "@/pages/app/InvoiceDetailPage";
 
 export function AppRouter() {
     return (
@@ -71,6 +72,7 @@ export function AppRouter() {
                 <Route path="tasks" element={<TasksPage />} />
                 <Route path="tasks/:id" element={<TaskDetailPage />} />
                 <Route path="invoices" element={<InvoicesPage />} />
+                <Route path="invoices/:id" element={<InvoiceDetailPage />} />
                 <Route path="files" element={<FilesPage />} />
                 <Route path="team" element={<TeamPage />} />
                 <Route path="settings" element={<SettingsPage />} />

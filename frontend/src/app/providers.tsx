@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "./theme";
+import { ActivateOrg } from "./activate-org";
 
 export function Providers({ children }: { children: ReactNode }) {
     const [queryClient] = useState(
@@ -22,6 +23,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <ThemeProvider>
             <QueryClientProvider client={queryClient}>
                 <BrowserRouter>
+                    <ActivateOrg />
                     {children}
                     <Toaster richColors position="top-right" />
                 </BrowserRouter>
