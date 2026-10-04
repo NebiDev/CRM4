@@ -17,6 +17,8 @@ import { projectsRouter } from "./modules/projects/project.routes.js";
 import { tasksRouter } from "./modules/tasks/task.routes.js";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes.js";
 import { filesRouter } from "./modules/files/file.routes.js";
+import { invoicesRouter } from "./modules/invoices/invoice.routes.js";
+import { agreementsRouter } from "./modules/agreements/agreement.routes.js";
 
 export function createApp() {
     const app = express();
@@ -98,6 +100,8 @@ export function createApp() {
     app.use("/api/tasks", tasksRouter);
     app.use("/api/dashboard", dashboardRouter);
     app.use("/api/files", filesRouter);
+    app.use("/api/invoices", invoicesRouter);
+    app.use("/api/agreements", agreementsRouter);
 
     // ── 404 + error handlers (must be last) ────────────────
     app.use(notFoundHandler);
