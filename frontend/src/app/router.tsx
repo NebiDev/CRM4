@@ -9,6 +9,8 @@ import { HomePage } from "@/pages/marketing/HomePage";
 import { ServicesPage } from "@/pages/marketing/ServicesPage";
 import { ContactPage } from "@/pages/marketing/ContactPage";
 import { PricingPage } from "@/pages/marketing/PricingPage";
+import { ClientDetailPage } from "@/pages/app/ClientDetailPage";
+import { ProjectDetailPage } from "@/pages/app/ProjectDetailPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { DashboardPage } from "@/pages/app/DashboardPage";
@@ -20,6 +22,7 @@ import { FilesPage } from "@/pages/app/FilesPage";
 import { TeamPage } from "@/pages/app/TeamPage";
 import { SettingsPage } from "@/pages/app/SettingsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { TaskDetailPage } from "@/pages/app/TaskDetailPage";
 
 export function AppRouter() {
     return (
@@ -62,8 +65,11 @@ export function AppRouter() {
                 <Route index element={<Navigate to="/app/dashboard" replace />} />
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="clients" element={<ClientsPage />} />
+                <Route path="clients/:id" element={<ClientDetailPage />} />
                 <Route path="projects" element={<ProjectsPage />} />
+                <Route path="projects/:id" element={<ProjectDetailPage />} />
                 <Route path="tasks" element={<TasksPage />} />
+                <Route path="tasks/:id" element={<TaskDetailPage />} />
                 <Route path="invoices" element={<InvoicesPage />} />
                 <Route path="files" element={<FilesPage />} />
                 <Route path="team" element={<TeamPage />} />
