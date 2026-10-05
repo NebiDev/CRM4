@@ -1,11 +1,9 @@
 import type { RequestHandler } from "express";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../config/auth.js";
+import { db } from "../config/db.js";
 import { AppError } from "../shared/errors.js";
-import type { ActiveMembership, SessionUser } from "../shared/types.js";
 import type { Role } from "../shared/permissions.js";
-
-
 
 export const requireAuth: RequestHandler = async (req, _res, next) => {
     try {
@@ -23,8 +21,7 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
         const activeOrgId = (session.session as { activeOrganizationId?: string })
             .activeOrganizationId;
 
-        const { db } = await import("../config/db.js");
-
+        // Resolve membership FIRST — this is the source of truth for "who am I in this org".
         const member = activeOrgId
             ? await db.member.findFirst({
                 where: { userId: session.user.id, organizationId: activeOrgId },
@@ -34,12 +31,37 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
                 orderBy: { createdAt: "asc" },
             });
 
-        if (member) {
-            req.membership = {
-                id: member.id,
-                organizationId: member.organizationId,
-                role: member.role as Role,
-            };
+        if (!member) {
+            // Not a member of any org. Could still be a portal client (next check).
+            const client = await db.client.findFirst({
+                where: { userId: session.user.id },
+                select: { id: true, organizationId: true },
+            });
+            if (client) {
+                req.client = { id: client.id, organizationId: client.organizationId };
+            }
+            return next();
+        }
+
+        req.membership = {
+            id: member.id,
+            organizationId: member.organizationId,
+            role: member.role as Role,
+        };
+
+        // If their role in this org is literally "client", resolve the Client row.
+        // Otherwise they are staff/admin/owner and req.client stays undefined.
+        if (member.role === "client") {
+            const client = await db.client.findFirst({
+                where: {
+                    userId: session.user.id,
+                    organizationId: member.organizationId,
+                },
+                select: { id: true },
+            });
+            if (client) {
+                req.client = { id: client.id, organizationId: member.organizationId };
+            }
         }
 
         next();
@@ -47,66 +69,3 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
         next(err);
     }
 };
-
-
-
-
-
-
-// export const requireAuth: RequestHandler = async (req, _res, next) => {
-//     try {
-//         const session = await auth.api.getSession({
-//             headers: fromNodeHeaders(req.headers),
-//         });
-
-//         if (!session?.user) {
-//             throw AppError.unauthorized("Not signed in");
-//         }
-
-//         req.user = {
-//             id: session.user.id,
-//             email: session.user.email,
-//             name: session.user.name ?? "",
-//         };
-
-//         // Resolve the *active* organization membership for this user.
-//         // Better Auth stores the active org id on the session if
-//         // the organization plugin's setActive is used. Fall back to
-//         // the user's first membership.
-//         const activeOrgId = (session.session as { activeOrganizationId?: string })
-//             .activeOrganizationId;
-
-//         const membership = activeOrgId
-//             ? await auth.api.getActiveMemberRole({
-//                 headers: fromNodeHeaders(req.headers),
-//             })
-//             : null;
-
-//         // We'll query the membership row directly for robustness.
-//         const { db } = await import("../config/db.js");
-//         const member = activeOrgId
-//             ? await db.member.findFirst({
-//                 where: { userId: session.user.id, organizationId: activeOrgId },
-//             })
-//             : await db.member.findFirst({
-//                 where: { userId: session.user.id },
-//                 orderBy: { createdAt: "asc" },
-//             });
-
-//         if (!member) {
-//             // Signed in but no org yet — allowed to reach onboarding routes.
-//             req.membership = undefined;
-//             return next();
-//         }
-
-//         req.membership = {
-//             id: member.id,
-//             organizationId: member.organizationId,
-//             role: member.role as Role,
-//         } satisfies ActiveMembership;
-
-//         next();
-//     } catch (err) {
-//         next(err);
-//     }
-// };

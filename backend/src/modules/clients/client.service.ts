@@ -1,12 +1,14 @@
+import { Prisma } from "@prisma/client";
 import { db } from "../../config/db.js";
 import { AppError } from "../../shared/errors.js";
-import { assertSameOrg } from "../../shared/tenant.js";
+import { scopeClients } from "../../shared/scopes.js";
+import type { Actor } from "../../shared/types.js";
+import { logActivity } from "../../shared/activity.js";
 import type {
     CreateClientInput,
     ListClientsQuery,
     UpdateClientInput,
 } from "./client.schema.js";
-import { logActivity } from "../../shared/activity.js";
 
 function clean<T extends Record<string, unknown>>(obj: T): Partial<T> {
     const out: Record<string, unknown> = {};
@@ -16,74 +18,66 @@ function clean<T extends Record<string, unknown>>(obj: T): Partial<T> {
     return out as Partial<T>;
 }
 
-export async function listClients(
-    organizationId: string,
-    query: ListClientsQuery,
-) {
+export async function listClients(actor: Actor, query: ListClientsQuery) {
     const { page, pageSize, q, status, sort, order } = query;
     const skip = (page - 1) * pageSize;
 
-    const where = {
-        organizationId,
+    const where: Prisma.ClientWhereInput = {
+        ...scopeClients(actor),
         ...(status ? { status } : {}),
         ...(q
             ? {
                 OR: [
-                    { name: { contains: q, mode: "insensitive" as const } },
-                    { email: { contains: q, mode: "insensitive" as const } },
-                    { company: { contains: q, mode: "insensitive" as const } },
+                    { name: { contains: q, mode: "insensitive" } },
+                    { email: { contains: q, mode: "insensitive" } },
+                    { company: { contains: q, mode: "insensitive" } },
                 ],
             }
             : {}),
     };
 
     const [rows, total] = await Promise.all([
-        db.client.findMany({
-            where,
-            orderBy: { [sort]: order },
-            skip,
-            take: pageSize,
-        }),
+        db.client.findMany({ where, orderBy: { [sort]: order }, skip, take: pageSize }),
         db.client.count({ where }),
     ]);
 
     return { rows, total, page, pageSize };
 }
 
-export async function getClient(organizationId: string, id: string) {
-    const client = await db.client.findUnique({ where: { id } });
-    assertSameOrg(client, organizationId);
-    return client!;
+export async function getClient(actor: Actor, id: string) {
+    const client = await db.client.findFirst({
+        where: { id, ...scopeClients(actor) },
+    });
+    if (!client) throw AppError.notFound("Client not found");
+    return client;
 }
 
-export async function createClient(
-    organizationId: string,
-    userId: string,
-    input: CreateClientInput,
-) {
+export async function createClient(actor: Actor, input: CreateClientInput) {
     const data = clean(input);
 
-    // Unique per-org email guard (empty emails are not unique-checked).
     if (data.email) {
         const existing = await db.client.findFirst({
-            where: { organizationId, email: data.email },
+            where: { organizationId: actor.organizationId, email: data.email },
         });
-        if (existing) {
-            throw AppError.conflict("A client with that email already exists");
-        }
+        if (existing) throw AppError.conflict("A client with that email already exists");
     }
 
     const client = await db.client.create({
         data: {
-            ...(data as any),
-            organizationId,
-            createdById: userId,
+            name: input.name,                    // required — taken from the validated input
+            email: data.email,
+            phone: data.phone,
+            company: data.company,
+            notes: data.notes,
+            status: input.status ?? "ACTIVE",
+            organizationId: actor.organizationId,
+            createdById: actor.userId,
         },
     });
 
     await logActivity({
-        organizationId,
-        actorId: userId,
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
         action: "client.created",
         entityType: "Client",
         entityId: client.id,
@@ -94,29 +88,32 @@ export async function createClient(
     return client;
 }
 
-export async function updateClient(
-    organizationId: string,
-    userId: string,
-    id: string,
-    input: UpdateClientInput,
-) {
-    const existing = await getClient(organizationId, id);
+export async function updateClient(actor: Actor, id: string, input: UpdateClientInput) {
+    const existing = await getClient(actor, id);
     const data = clean(input);
 
     if (data.email && data.email !== existing.email) {
         const dup = await db.client.findFirst({
-            where: { organizationId, email: data.email, NOT: { id } },
+            where: { organizationId: actor.organizationId, email: data.email, NOT: { id } },
         });
-        if (dup) {
-            throw AppError.conflict("A client with that email already exists");
-        }
+        if (dup) throw AppError.conflict("A client with that email already exists");
     }
 
-    const updated = await db.client.update({ where: { id }, data });
+    const updated = await db.client.update({
+        where: { id },
+        data: {
+            ...(data.name !== undefined ? { name: data.name } : {}),
+            ...(data.email !== undefined ? { email: data.email } : {}),
+            ...(data.phone !== undefined ? { phone: data.phone } : {}),
+            ...(data.company !== undefined ? { company: data.company } : {}),
+            ...(data.notes !== undefined ? { notes: data.notes } : {}),
+            ...(data.status !== undefined ? { status: data.status } : {}),
+        },
+    });
 
     await logActivity({
-        organizationId,
-        actorId: userId,
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
         action: "client.updated",
         entityType: "Client",
         entityId: id,
@@ -126,20 +123,16 @@ export async function updateClient(
     return updated;
 }
 
-export async function archiveClient(
-    organizationId: string,
-    userId: string,
-    id: string,
-) {
-    await getClient(organizationId, id);
+export async function archiveClient(actor: Actor, id: string) {
+    await getClient(actor, id);
     const archived = await db.client.update({
         where: { id },
         data: { status: "ARCHIVED", archivedAt: new Date() },
     });
 
     await logActivity({
-        organizationId,
-        actorId: userId,
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
         action: "client.archived",
         entityType: "Client",
         entityId: id,

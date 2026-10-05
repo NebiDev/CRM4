@@ -30,12 +30,14 @@ model User {
   // NEXA domain relations
   clientsCreated    Client[]      @relation("ClientCreatedBy")
   projectsCreated   Project[]     @relation("ProjectCreatedBy")
+  projectsAssigned  Project[]     @relation("ProjectAssignedTo")
   tasksCreated      Task[]        @relation("TaskCreatedBy")
   tasksAssigned     Task[]        @relation("TaskAssignedTo")
   invoicesCreated   Invoice[]     @relation("InvoiceCreatedBy")
   filesUploaded     FileAsset[]   @relation("FileUploadedBy")
   activities        ActivityLog[] @relation("ActivityActor")
   agreementsCreated Agreement[]   @relation("AgreementCreatedBy")
+  clientOf          Client?       @relation("ClientUser")
 
   @@unique([email])
   @@map("user")
@@ -195,6 +197,7 @@ enum FileVisibility {
 model Client {
   id             String       @id @default(cuid())
   organizationId String
+  userId         String?      @unique
   name           String
   email          String?
   phone          String?
@@ -208,6 +211,7 @@ model Client {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy    User?        @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  user         User?        @relation("ClientUser", fields: [userId], references: [id], onDelete: SetNull)
 
   projects   Project[]
   invoices   Invoice[]
@@ -224,6 +228,7 @@ model Project {
   id             String          @id @default(cuid())
   organizationId String
   clientId       String
+  assignedToId   String?
   name           String
   description    String?
   status         ProjectStatus   @default(PLANNING)
@@ -238,6 +243,7 @@ model Project {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   client       Client       @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  assignedTo   User?        @relation("ProjectAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
   createdBy    User?        @relation("ProjectCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   tasks      Task[]
@@ -248,6 +254,7 @@ model Project {
 
   @@index([organizationId, status])
   @@index([organizationId, clientId])
+  @@index([organizationId, assignedToId])
   @@index([organizationId, dueDate])
 }
 

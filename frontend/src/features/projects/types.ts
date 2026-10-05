@@ -6,6 +6,8 @@ export interface Project {
     description: string | null;
     status: "PLANNING" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
     priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+    assignedToId: string | null;
+    assignedTo?: { id: string; name: string | null } | null;
     startDate: string | null;
     dueDate: string | null;
     budget: string | null;

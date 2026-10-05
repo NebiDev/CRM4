@@ -74,3 +74,17 @@ export function useUpdateMemberRole() {
         onError: (e: Error) => toast.error(e.message),
     });
 }
+export function useActiveMembers() {
+    return useQuery({
+        queryKey: ["organization", "members"],
+        queryFn: async () => {
+            const result = await authClient.organization.getFullOrganization();
+            if ((result as any).error) throw new Error((result as any).error.message);
+            return (result.data?.members ?? []) as Array<{
+                id: string;
+                role: string;
+                user: { id: string; name: string | null; email: string };
+            }>;
+        },
+    });
+}

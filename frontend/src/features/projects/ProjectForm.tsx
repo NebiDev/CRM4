@@ -13,6 +13,7 @@ import {
     useUpdateProject,
 } from "./hooks";
 import type { Project } from "./types";
+import { useActiveMembers } from "@/features/team/hooks";
 
 const Schema = z.object({
     clientId: z.string().min(1, "Client is required"),
@@ -23,6 +24,7 @@ const Schema = z.object({
     startDate: z.string().optional().or(z.literal("")),
     dueDate: z.string().optional().or(z.literal("")),
     budget: z.string().optional().or(z.literal("")),
+    assignedToId: z.string().optional().or(z.literal("")),
 });
 
 type Values = z.infer<typeof Schema>;
@@ -47,6 +49,7 @@ export function ProjectForm({ project, onDone }: Props) {
     const create = useCreateProject();
     const update = useUpdateProject(project?.id ?? "");
     const { data: clientsData } = useClients({ pageSize: 100 });
+    const { data: members } = useActiveMembers();
 
     const form = useForm<Values>({
         resolver: zodResolver(Schema),
@@ -59,6 +62,7 @@ export function ProjectForm({ project, onDone }: Props) {
             startDate: toDateInput(project?.startDate),
             dueDate: toDateInput(project?.dueDate),
             budget: project?.budget ?? "",
+            assignedToId: project?.assignedToId ?? "",
         },
     });
 
@@ -71,6 +75,7 @@ export function ProjectForm({ project, onDone }: Props) {
                 description: values.description || undefined,
                 status: values.status,
                 priority: values.priority,
+                assignedToId: values.assignedToId || undefined,
             };
             if (values.startDate) payload.startDate = values.startDate;
             if (values.dueDate) payload.dueDate = values.dueDate;
@@ -114,6 +119,23 @@ export function ProjectForm({ project, onDone }: Props) {
                         Client cannot be changed after creation.
                     </p>
                 )}
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="assignedToId">Lead (optional)</Label>
+
+                <select
+                    id="assignedToId"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    {...form.register("assignedToId")}
+                >
+                    <option value="">Unassigned</option>
+
+                    {members?.map((m) => (
+                        <option key={m.user.id} value={m.user.id}>
+                            {m.user.name ?? m.user.email} ({m.role})
+                        </option>
+                    ))}
+                </select>
             </div>
 
             <div className="space-y-2">

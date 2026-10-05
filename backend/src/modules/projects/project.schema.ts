@@ -17,6 +17,7 @@ export const ProjectPriorityEnum = z.enum([
 
 export const CreateProjectSchema = z.object({
     clientId: z.string().min(1),
+    assignedToId: z.string().optional().nullable(),
     name: z.string().trim().min(1).max(200),
     description: z.string().trim().max(5000).optional().or(z.literal("")),
     status: ProjectStatusEnum.default("PLANNING"),
@@ -41,6 +42,7 @@ export const ListProjectsQuerySchema = z.object({
     status: ProjectStatusEnum.optional(),
     priority: ProjectPriorityEnum.optional(),
     clientId: z.string().optional(),
+    assignedToId: z.string().optional(),
     sort: z.enum(["name", "createdAt", "dueDate", "updatedAt"]).default("createdAt"),
     order: z.enum(["asc", "desc"]).default("desc"),
 });
