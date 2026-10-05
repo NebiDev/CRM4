@@ -69,36 +69,3 @@ export async function sendEmail(input: SendEmailInput): Promise<void> {
 
 
 
-// export async function sendEmail(input: SendEmailInput): Promise<void> {
-//     const client = getEmailClient();
-
-//     if (!client) {
-//         console.warn("[email] RESEND_API_KEY not set — skipping send:", input.subject);
-//         return;
-//     }
-
-//     try {
-//         const result = await client.emails.send({
-//             from: EMAIL_FROM,
-//             to: input.to,
-//             subject: input.subject,
-//             html: input.html,
-//             text: input.text,
-//             replyTo: input.replyTo,
-//         });
-
-//         if (result.error) {
-//             console.warn("[email] provider error", result.error);
-//             return;
-//         }
-
-//         console.info("[email] accepted by provider", {
-//             emailId: result.data?.id,
-//             subject: input.subject,
-//         });
-
-
-//     } catch (err) {
-//         console.warn("[email] send failed", err);
-//     }
-// }
