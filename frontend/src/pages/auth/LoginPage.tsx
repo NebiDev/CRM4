@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
+import { LinkButton } from "@/components/ui/LinkButton";
 
 const Schema = z.object({
     email: z.string().email(),
@@ -78,6 +79,15 @@ export function LoginPage() {
                                     <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
                                 )}
                             </div>
+                            <div className="flex items-center justify-between text-sm">
+                                <label className="flex items-center gap-2">
+                                    <input type="checkbox" className="h-4 w-4" />
+                                    Remember me
+                                </label>
+                                <Link to="/forgot-password" className="text-primary hover:underline">
+                                    Forgot your password?
+                                </Link>
+                            </div>
 
                             <Button type="submit" className="w-full" disabled={submitting}>
                                 {submitting ? <Spinner /> : "Sign in"}
@@ -90,9 +100,9 @@ export function LoginPage() {
                             <div className="h-px flex-1 bg-border" />
                         </div>
 
-                        <Link to="/register">
-                            <Button variant="outline" className="w-full">Create an account</Button>
-                        </Link>
+                        <LinkButton to="/register" variant="outline" className="w-full">
+                            Create an account
+                        </LinkButton>
                     </CardContent>
                 </Card>
 

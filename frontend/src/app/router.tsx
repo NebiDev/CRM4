@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { AboutPage } from "@/pages/marketing/AboutPage";
 import { MarketingLayout } from "@/layouts/MarketingLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { RequireAuth } from "./require-auth";
@@ -26,6 +27,7 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 import { TaskDetailPage } from "@/pages/app/TaskDetailPage";
 import { InvoiceDetailPage } from "@/pages/app/InvoiceDetailPage";
 
+
 export function AppRouter() {
     return (
         <Routes>
@@ -34,6 +36,7 @@ export function AppRouter() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/services" element={<ServicesPage />} />
                 <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
             </Route>
 

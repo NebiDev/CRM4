@@ -3,20 +3,20 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { SlideUp } from "@/components/ui/motion";
 
-export function PricingPage() {
+export function AboutPage() {
     return (
         <section className="container py-24 text-center">
             <SlideUp>
-                <h1 className="text-3xl font-semibold md:text-4xl">Pricing</h1>
+                <h1 className="text-3xl font-semibold md:text-4xl">About NEXA</h1>
                 <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-                    Every project is priced after a short discovery call. We work on both
-                    fixed-scope builds and monthly retainers, depending on what fits your
-                    business.
+                    NEXA helps small businesses replace manual work with reliable systems.
+                    We build the infrastructure they need to grow — payroll automation,
+                    internal dashboards, custom websites, and everything in between.
                 </p>
                 <div className="mt-8 flex justify-center">
                     <Link to="/contact">
                         <Button size="lg">
-                            Request a quote <ArrowRight className="h-4 w-4" />
+                            Get in touch <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
                 </div>

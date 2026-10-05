@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
+import { LinkButton } from "@/components/ui/LinkButton";
 
 const Schema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -108,9 +109,17 @@ export function RegisterPage() {
                             <div className="h-px flex-1 bg-border" />
                         </div>
 
-                        <Link to="/login">
-                            <Button variant="outline" className="w-full">Sign in instead</Button>
-                        </Link>
+                        <LinkButton to="/login" variant="outline" className="w-full">
+                            Sign in instead
+                        </LinkButton>
+                        <div className="mt-6 rounded-lg border border-border bg-secondary/40 p-4 text-sm">
+                            <p className="font-medium">Why register?</p>
+                            <ul className="mt-2 space-y-1 text-muted-foreground">
+                                <li>→ Access to your client dashboard</li>
+                                <li>→ Track project progress in real time</li>
+                                <li>→ Receive invoices and documents directly</li>
+                            </ul>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

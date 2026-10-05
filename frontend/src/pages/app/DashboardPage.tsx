@@ -13,8 +13,15 @@ import {
 import {
     AlertCircle,
     CheckSquare,
-    FolderKanban,
+   
     Users,
+} from "lucide-react";
+
+import {
+    UsersRound,
+    FolderKanban,
+    ListChecks,
+    CircleAlert,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatCard } from "@/features/dashboard/StatCard";
@@ -58,18 +65,34 @@ export function DashboardPage() {
                         <StatCard key={i} label="—" value="—" loading />
                     ))
                     : summary?.cards.map((card, i) => (
+
                         <StatCard
                             key={i}
                             label={card.label}
                             value={card.value}
                             hint={card.hint}
                             icon={
-                                i === 0 ? <Users className="h-4 w-4" /> :
-                                    i === 1 ? <FolderKanban className="h-4 w-4" /> :
-                                        i === 2 ? <CheckSquare className="h-4 w-4" /> :
-                                            <AlertCircle className="h-4 w-4" />
+                                i === 0 ? (
+                                    <UsersRound className="h-5 w-5" strokeWidth={1.8} />
+                                ) : i === 1 ? (
+                                    <FolderKanban className="h-5 w-5" strokeWidth={1.8} />
+                                ) : i === 2 ? (
+                                    <ListChecks className="h-5 w-5" strokeWidth={1.8} />
+                                ) : (
+                                    <CircleAlert className="h-5 w-5" strokeWidth={1.8} />
+                                )
+                            }
+                            iconClassName={
+                                i === 0
+                                    ? "bg-blue-50 text-blue-600"
+                                    : i === 1
+                                        ? "bg-violet-50 text-violet-600"
+                                        : i === 2
+                                            ? "bg-emerald-50 text-emerald-600"
+                                            : "bg-rose-50 text-rose-600"
                             }
                         />
+
                     ))}
             </div>
 

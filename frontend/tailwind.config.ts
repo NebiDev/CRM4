@@ -44,6 +44,14 @@ const config: Config = {
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",
+
+                sidebar: {
+                    DEFAULT: "hsl(var(--sidebar))",
+                    foreground: "hsl(var(--sidebar-foreground))",
+                    accent: "hsl(var(--sidebar-accent))",
+                    "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+                    border: "hsl(var(--sidebar-border))",
+                },
             },
             borderRadius: {
                 lg: "var(--radius)",
@@ -53,11 +61,11 @@ const config: Config = {
             fontFamily: {
                 sans: ["Inter", "system-ui", "sans-serif"],
             },
+            boxShadow: {
+                soft: "0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06)",
+            },
             keyframes: {
-                "fade-in": {
-                    from: { opacity: "0" },
-                    to: { opacity: "1" },
-                },
+                "fade-in": { from: { opacity: "0" }, to: { opacity: "1" } },
                 "slide-up": {
                     from: { opacity: "0", transform: "translateY(8px)" },
                     to: { opacity: "1", transform: "translateY(0)" },
